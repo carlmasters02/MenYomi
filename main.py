@@ -215,38 +215,247 @@ HTML_PAGE = """
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Menu Translator</title>
+<title>MenYomi — Read any Japanese menu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, sans-serif; background: #f5f5f5; min-height: 100vh; display: flex; justify-content: center; padding: 2rem; }
-  .container { background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.1); padding: 2rem; width: 100%; max-width: 600px; }
-  h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: #333; }
-  .controls { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap; }
-  input[type="file"] { flex: 1; }
-  button { background: #e63946; color: #fff; border: none; border-radius: 8px; padding: 0.6rem 1.4rem; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
-  button:hover { background: #c1121f; }
-  button:disabled { background: #aaa; cursor: not-allowed; }
-  #status { font-size: 0.9rem; color: #555; min-height: 1.2em; }
-  #results { margin-top: 1rem; }
-  .menu-item { border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; background: #fafafa; }
-  .menu-item .jp { font-size: 1.2rem; font-weight: bold; color: #333; }
-  .menu-item .en { font-size: 1rem; color: #555; margin-top: 0.2rem; }
-  .menu-item .price { font-size: 0.95rem; color: #e63946; font-weight: 600; margin-top: 0.3rem; }
-  .menu-item .desc { font-size: 0.88rem; color: #777; margin-top: 0.3rem; }
-  .error { color: #c1121f; font-size: 0.9rem; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #f4f1ec;
+    --surface:  #ffffff;
+    --text:     #1a1a1a;
+    --muted:    #6b7280;
+    --accent:   #d94f3d;
+    --accent2:  #2a9d8f;
+    --border:   #e5e1db;
+    --shadow:   0 2px 12px rgba(0,0,0,0.06);
+    --shadow-lg:0 8px 32px rgba(0,0,0,0.10);
+    --radius:   12px;
+    --radius-sm:8px;
+  }
+
+  body {
+    font-family: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem;
+    line-height: 1.5;
+  }
+
+  .container {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    padding: 2rem 2rem 2.5rem;
+    width: 100%;
+    max-width: 640px;
+    align-self: flex-start;
+  }
+
+  /* ── Header ─────────────────────────── */
+  .header { text-align: center; margin-bottom: 2rem; }
+  .header .brand {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .header .brand .jp {
+    font-size: 1.4rem;
+    color: var(--text);
+    margin-left: 0.3rem;
+  }
+  .header .tagline {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── Controls ───────────────────────── */
+  .controls {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  input[type="file"] {
+    flex: 1;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  input[type="file"]::file-selector-button {
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    margin-right: 0.5rem;
+    transition: background 0.15s;
+  }
+  input[type="file"]::file-selector-button:hover { background: #f0ece6; }
+
+  button {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 1.2rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+  #translateBtn { background: var(--accent); color: #fff; }
+  #translateBtn:hover:not(:disabled) { background: #c0412f; }
+
+  #exportBtn {
+    background: var(--accent2);
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+  #exportBtn:hover:not(:disabled) { background: #228176; }
+
+  /* ── Spinner ────────────────────────── */
+  .spinner-wrap { display: none; justify-content: center; padding: 2rem 0; }
+  .spinner-wrap.active { display: flex; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Status ─────────────────────────── */
+  #status { font-size: 0.85rem; color: var(--muted); min-height: 1.2em; margin-bottom: 0.5rem; }
+  .error { color: var(--accent) !important; }
+
+  /* ── Results ────────────────────────── */
+  #results { margin-top: 0.5rem; }
+
+  .section-header {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 1.5rem 0 0.6rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 2px solid var(--accent);
+    display: inline-block;
+  }
+  .section-header:first-child { margin-top: 0.5rem; }
+
+  .menu-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    margin-bottom: 0.6rem;
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.15s;
+  }
+  .menu-item:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.10); }
+
+  .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+  .item-names { flex: 1; }
+  .jp-name {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .jp-desc {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.1rem;
+  }
+  .en-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #374151;
+    margin-top: 0.15rem;
+  }
+  .price {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-top: 0.1rem;
+  }
+  .en-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.35rem;
+    line-height: 1.4;
+  }
+  .allergens { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.45rem; }
+  .pill {
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #fef2f0;
+    color: var(--accent);
+    border: 1px solid #fcd9cf;
+    border-radius: 100px;
+    padding: 0.15rem 0.55rem;
+    text-transform: capitalize;
+  }
+
+  .raw-block {
+    white-space: pre-wrap;
+    background: #f9f6f1;
+    border: 1px solid var(--border);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 0.75rem; }
+    .container { padding: 1.25rem 1.25rem 1.75rem; }
+    .header .brand { font-size: 1.6rem; }
+    .item-top { flex-direction: column; gap: 0.3rem; }
+  }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🍜 Menu Translator</h1>
+  <div class="header">
+    <div class="brand">MenYomi <span class="jp">メニヨミ</span></div>
+    <div class="tagline">Read any Japanese menu</div>
+  </div>
+  <div class="divider"></div>
   <div class="controls">
     <input type="file" id="fileInput" accept="image/*" />
     <button id="translateBtn" onclick="handleTranslate()">Translate</button>
   </div>
-  <div style="margin-bottom:1rem;">
-    <button id="exportBtn" onclick="handleExport()" style="background:#2a9d8f;" disabled>Download Menu Page</button>
+  <div>
+    <button id="exportBtn" onclick="handleExport()" disabled>Download Menu Page</button>
   </div>
   <div id="status"></div>
+  <div class="spinner-wrap" id="spinnerWrap"><div class="spinner"></div></div>
   <div id="results"></div>
 </div>
 <script>
@@ -277,9 +486,10 @@ function startExport(items) {
 
 async function handleTranslate() {
   const fileInput = document.getElementById('fileInput');
-  const status   = document.getElementById('status');
-  const results  = document.getElementById('results');
-  const btn      = document.getElementById('translateBtn');
+  const status    = document.getElementById('status');
+  const results   = document.getElementById('results');
+  const btn       = document.getElementById('translateBtn');
+  const spinner   = document.getElementById('spinnerWrap');
 
   results.innerHTML = '';
   status.textContent = '';
@@ -294,15 +504,17 @@ async function handleTranslate() {
   formData.append('file', fileInput.files[0]);
 
   btn.disabled = true;
+  spinner.classList.add('active');
   status.textContent = 'Translating…';
 
   try {
     const res = await fetch('/parse-menu', { method: 'POST', body: formData });
     if (!res.ok) throw new Error(`Server error: ${res.status}`);
     const data = await res.json();
+    spinner.classList.remove('active');
     if (data.raw) {
       status.innerHTML = '<span class="error">OCR returned unparseable text — showing raw below.</span>';
-      results.innerHTML = `<pre style="white-space:pre-wrap;background:#f0f0f0;padding:1rem;border-radius:8px;font-size:0.85rem;">${data.raw}</pre>`;
+      results.innerHTML = `<pre class="raw-block">${data.raw}</pre>`;
       return;
     }
     renderItems(data.items || []);
@@ -312,6 +524,7 @@ async function handleTranslate() {
       startExport(_menuItems);
     }
   } catch (err) {
+    spinner.classList.remove('active');
     status.innerHTML = `<span class="error">${err.message}</span>`;
   } finally {
     btn.disabled = false;
@@ -321,20 +534,39 @@ async function handleTranslate() {
 function renderItems(items) {
   const results = document.getElementById('results');
   if (!items.length) {
-    results.innerHTML = '<p>No items found.</p>';
+    results.innerHTML = '<p style="color:var(--muted)">No items found.</p>';
     return;
   }
-  results.innerHTML = items.map(item => `
-    <div class="menu-item">
-      <div class="jp">${item.jp_name}</div>
-      ${item.jp_desc ? `<div style="color:#888;font-size:0.85rem;margin-top:0.1rem;">${item.jp_desc}</div>` : ''}
-      ${item.en_name ? `<div class="en">${item.en_name}</div>` : ''}
-      ${item.section ? `<div style="font-style:italic;color:#888;font-size:0.85rem;">${item.section}</div>` : ''}
-      <div class="price">${item.price ? '¥' + item.price : ''}</div>
-      ${item.en_desc ? `<div class="desc">${item.en_desc}</div>` : ''}
-      ${item.allergens && item.allergens.length ? `<div style="font-size:0.8rem;color:#c1121f;margin-top:0.2rem;">Allergens: ${item.allergens.join(', ')}</div>` : ''}
-    </div>
-  `).join('');
+  // Group by section
+  const groups = {};
+  items.forEach(item => {
+    const sec = item.section || '';
+    if (!groups[sec]) groups[sec] = [];
+    groups[sec].push(item);
+  });
+  let html = '';
+  Object.keys(groups).forEach(sec => {
+    if (sec) html += `<div class="section-header">${sec}</div>`;
+    groups[sec].forEach(item => {
+      const pills = (item.allergens && item.allergens.length)
+        ? `<div class="allergens">${item.allergens.map(a => `<span class="pill">${a}</span>`).join('')}</div>`
+        : '';
+      html += `
+        <div class="menu-item">
+          <div class="item-top">
+            <div class="item-names">
+              <div class="jp-name">${item.jp_name}</div>
+              ${item.jp_desc ? `<div class="jp-desc">${item.jp_desc}</div>` : ''}
+              ${item.en_name ? `<div class="en-name">${item.en_name}</div>` : ''}
+            </div>
+            ${item.price ? `<div class="price">${item.price}</div>` : ''}
+          </div>
+          ${item.en_desc ? `<div class="en-desc">${item.en_desc}</div>` : ''}
+          ${pills}
+        </div>`;
+    });
+  });
+  results.innerHTML = html;
 }
 
 async function handleExport() {
