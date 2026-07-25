@@ -390,12 +390,22 @@ HTML_PAGE = """
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+    overflow: hidden;
     padding: 1rem 1.2rem;
     margin-bottom: 0.6rem;
     box-shadow: var(--shadow);
     transition: box-shadow 0.15s;
   }
   .menu-item:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.10); }
+
+  .dish-photo {
+    width: calc(100% + 2.4rem);
+    margin: -1rem -1.2rem 0.75rem -1.2rem;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+    background: #f0ece6;
+  }
 
   .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
   .item-names { flex: 1; }
@@ -747,6 +757,7 @@ function renderItems(items) {
         : '';
       html += `
         <div class="menu-item" data-idx="${idx}">
+          ${item.en_name ? `<img class="dish-photo" src="https://source.unsplash.com/300x200/?${encodeURIComponent(item.en_name + ' japanese food')}" alt="${item.en_name}" loading="lazy" onerror="this.style.display='none'" />` : ''}
           <div class="item-top">
             <div class="item-names">
               <div class="jp-name">${item.jp_name}</div>
