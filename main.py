@@ -264,270 +264,336 @@ HTML_PAGE = """
 <title>MenYomi — Read any Japanese menu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg:       #f4f1ec;
-    --surface:  #ffffff;
-    --text:     #1a1a1a;
-    --muted:    #6b7280;
-    --accent:   #d94f3d;
-    --accent2:  #2a9d8f;
-    --border:   #e5e1db;
-    --shadow:   0 2px 12px rgba(0,0,0,0.06);
-    --shadow-lg:0 8px 32px rgba(0,0,0,0.10);
-    --radius:   12px;
-    --radius-sm:8px;
+    --bg:        #fbfbfd;
+    --surface:   #ffffff;
+    --surface-2: #f2f3f7;
+    --text:      #16182b;
+    --muted:     #6b7280;
+    --muted-lt:  #9ca3af;
+    --accent:    #e5484d;
+    --accent-h:  #dc3d42;
+    --indigo:    #5b6ee1;
+    --indigo-lt: #eef0fb;
+    --border:    #e8e9ee;
+    --shadow-sm: 0 1px 2px rgba(22,24,43,0.04);
+    --shadow:    0 2px 8px rgba(22,24,43,0.06), 0 1px 2px rgba(22,24,43,0.04);
+    --shadow-lg: 0 8px 24px rgba(22,24,43,0.08), 0 2px 6px rgba(22,24,43,0.04);
+    --radius:    14px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
   }
 
   body {
-    font-family: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Noto Sans JP', system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Sticky Header ──────────────────── */
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(251,251,253,0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1.5rem;
     display: flex;
+    align-items: center;
     justify-content: center;
-    padding: 1.5rem;
-    line-height: 1.5;
+    gap: 1rem;
   }
-
-  .container {
-    background: var(--surface);
-    border-radius: 16px;
-    box-shadow: var(--shadow-lg);
-    padding: 2rem 2rem 2.5rem;
-    width: 100%;
-    max-width: 640px;
-    align-self: flex-start;
-  }
-
-  /* ── Header ─────────────────────────── */
-  .header { text-align: center; margin-bottom: 2rem; }
+  .header { display: flex; align-items: baseline; gap: 0.6rem; }
   .header .brand {
-    font-family: 'Noto Sans JP', sans-serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: -0.02em;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.03em;
   }
   .header .brand .jp {
-    font-size: 1.4rem;
-    color: var(--text);
-    margin-left: 0.3rem;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--accent);
+    margin-left: 0.15rem;
   }
   .header .tagline {
-    font-size: 0.95rem;
-    color: var(--muted);
-    margin-top: 0.25rem;
-  }
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--muted-lt);
+    font-weight: 500;
   }
 
-  /* ── Controls ───────────────────────── */
+  /* ── Container ──────────────────────── */
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 3rem;
+  }
+
+  /* ── Controls Bar ───────────────────── */
+  .controls-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+  }
   .controls {
     display: flex;
     gap: 0.6rem;
-    margin-bottom: 1rem;
     align-items: center;
     flex-wrap: wrap;
   }
   input[type="file"] {
     flex: 1;
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--muted);
+    min-width: 0;
   }
   input[type="file"]::file-selector-button {
     font-family: inherit;
-    font-size: 0.85rem;
-    padding: 0.4rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.45rem 1rem;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    background: var(--surface);
+    background: var(--surface-2);
     color: var(--text);
     cursor: pointer;
-    margin-right: 0.5rem;
-    transition: background 0.15s;
+    margin-right: 0.6rem;
+    transition: all 0.15s;
   }
-  input[type="file"]::file-selector-button:hover { background: #f0ece6; }
+  input[type="file"]::file-selector-button:hover { background: #eaebf0; }
 
   button {
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
     border: none;
     border-radius: var(--radius-sm);
-    padding: 0.55rem 1.2rem;
+    padding: 0.55rem 1.3rem;
     cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
+    transition: all 0.15s;
+    letter-spacing: -0.01em;
   }
   button:active { transform: scale(0.97); }
-  button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+  button:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
 
   #translateBtn { background: var(--accent); color: #fff; }
-  #translateBtn:hover:not(:disabled) { background: #c0412f; }
+  #translateBtn:hover:not(:disabled) { background: var(--accent-h); box-shadow: 0 4px 12px rgba(229,72,77,0.3); }
 
+  .export-row { margin-top: 0.7rem; }
   #exportBtn {
-    background: var(--accent2);
+    background: var(--indigo);
     color: #fff;
-    margin-bottom: 1rem;
+    font-size: 0.82rem;
+    padding: 0.5rem 1.1rem;
   }
-  #exportBtn:hover:not(:disabled) { background: #228176; }
+  #exportBtn:hover:not(:disabled) { background: #4f60c9; box-shadow: 0 4px 12px rgba(91,110,225,0.3); }
 
   /* ── Spinner ────────────────────────── */
-  .spinner-wrap { display: none; justify-content: center; padding: 2rem 0; }
+  .spinner-wrap { display: none; justify-content: center; align-items: center; padding: 2.5rem 0; gap: 0.8rem; flex-direction: column; }
   .spinner-wrap.active { display: flex; }
   .spinner {
-    width: 36px; height: 36px;
+    width: 32px; height: 32px;
     border: 3px solid var(--border);
     border-top-color: var(--accent);
     border-radius: 50%;
-    animation: spin 0.7s linear infinite;
+    animation: spin 0.65s linear infinite;
   }
+  .spinner-label { font-size: 0.82rem; color: var(--muted-lt); font-weight: 500; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ── Status ─────────────────────────── */
-  #status { font-size: 0.85rem; color: var(--muted); min-height: 1.2em; margin-bottom: 0.5rem; }
-  .error { color: var(--accent) !important; }
+  #status { font-size: 0.82rem; color: var(--muted); min-height: 1.2em; margin-bottom: 0.4rem; padding: 0 0.2rem; }
+  .error { color: var(--accent) !important; font-weight: 600; }
 
   /* ── Results ────────────────────────── */
   #results { margin-top: 0.5rem; }
 
   .section-header {
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 1rem;
+    font-size: 0.78rem;
     font-weight: 700;
-    color: var(--accent);
-    margin: 1.5rem 0 0.6rem;
-    padding-bottom: 0.35rem;
-    border-bottom: 2px solid var(--accent);
+    color: var(--indigo);
+    background: var(--indigo-lt);
+    padding: 0.3rem 0.85rem;
+    border-radius: 100px;
     display: inline-block;
+    margin: 1.6rem 0 0.65rem;
+    letter-spacing: 0.02em;
   }
   .section-header:first-child { margin-top: 0.5rem; }
 
+  /* ── Menu Card ──────────────────────── */
   .menu-item {
     background: var(--surface);
     border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
     border-radius: var(--radius);
     overflow: hidden;
-    padding: 1rem 1.2rem;
-    margin-bottom: 0.6rem;
+    padding: 1rem 1.3rem;
+    margin-bottom: 0.7rem;
     box-shadow: var(--shadow);
-    transition: box-shadow 0.15s;
+    transition: box-shadow 0.2s, transform 0.2s;
+    animation: fadeInUp 0.4s ease both;
   }
-  .menu-item:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.10); }
+  .menu-item:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+  .menu-item:focus-within { box-shadow: 0 0 0 2px var(--indigo), var(--shadow); }
 
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .menu-item:nth-child(2)  { animation-delay: 0.04s; }
+  .menu-item:nth-child(3)  { animation-delay: 0.08s; }
+  .menu-item:nth-child(4)  { animation-delay: 0.12s; }
+  .menu-item:nth-child(5)  { animation-delay: 0.16s; }
+  .menu-item:nth-child(6)  { animation-delay: 0.20s; }
+  .menu-item:nth-child(7)  { animation-delay: 0.24s; }
+  .menu-item:nth-child(8)  { animation-delay: 0.28s; }
+  .menu-item:nth-child(9)  { animation-delay: 0.32s; }
+  .menu-item:nth-child(10) { animation-delay: 0.36s; }
+
+  /* ── Dish Photo ─────────────────────── */
   .dish-photo {
-    width: calc(100% + 2.4rem);
-    margin: -1rem -1.2rem 0.75rem -1.2rem;
-    height: 160px;
+    width: calc(100% + 2.6rem);
+    margin: -1rem -1.3rem 0.85rem -1.3rem;
+    height: 170px;
     object-fit: cover;
     display: block;
-    background: #f0ece6;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
   }
 
+  /* ── Item Layout ────────────────────── */
   .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
   .item-names { flex: 1; }
-  .jp-name-row { display: flex; align-items: center; gap: 0.4rem; }
+  .jp-name-row { display: flex; align-items: center; gap: 0.45rem; }
   .jp-name {
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--text);
-    line-height: 1.3;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
   }
   .speak-btn {
-    background: none;
-    border: none;
-    font-size: 1.1rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
     cursor: pointer;
-    padding: 0.15rem 0.3rem;
+    padding: 0.2rem;
+    width: 28px; height: 28px;
     border-radius: 50%;
-    transition: background 0.15s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
     flex-shrink: 0;
     line-height: 1;
   }
-  .speak-btn:hover { background: #f0ece6; }
+  .speak-btn:hover { background: var(--indigo-lt); border-color: var(--indigo); }
   .speak-btn:active { transform: scale(0.9); }
   .speak-btn.speaking {
-    background: var(--accent2);
+    background: var(--indigo);
+    border-color: var(--indigo);
     animation: pulse-speak 0.8s ease-in-out infinite;
   }
   @keyframes pulse-speak {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(42,157,143,0.4); }
-    50% { box-shadow: 0 0 0 6px rgba(42,157,143,0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(91,110,225,0.35); }
+    50% { box-shadow: 0 0 0 6px rgba(91,110,225,0); }
   }
   .jp-desc {
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 0.8rem;
-    color: var(--muted);
-    margin-top: 0.1rem;
+    font-size: 0.78rem;
+    color: var(--muted-lt);
+    margin-top: 0.15rem;
+    font-weight: 400;
   }
   .en-name {
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: #374151;
-    margin-top: 0.15rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #3d3f52;
+    margin-top: 0.2rem;
   }
   .price {
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: 1.05rem;
+    font-weight: 800;
     color: var(--accent);
     white-space: nowrap;
     flex-shrink: 0;
-    padding-top: 0.1rem;
+    padding-top: 0.15rem;
+    letter-spacing: -0.02em;
   }
   .en-desc {
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin-top: 0.35rem;
-    line-height: 1.4;
-  }
-  .allergens { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.45rem; }
-  .pill {
-    font-size: 0.72rem;
-    font-weight: 600;
-    background: #fef2f0;
-    color: var(--accent);
-    border: 1px solid #fcd9cf;
-    border-radius: 100px;
-    padding: 0.15rem 0.55rem;
-    text-transform: capitalize;
-  }
-  .culture-note {
-    font-size: 0.8rem;
-    font-style: italic;
+    font-size: 0.84rem;
     color: var(--muted);
     margin-top: 0.4rem;
-    line-height: 1.35;
+    line-height: 1.5;
   }
 
-  /* ── Dietary Filters ───────────────────── */
+  /* ── Allergen Pills ─────────────────── */
+  .allergens { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+  .pill {
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: var(--surface-2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 0.18rem 0.6rem;
+    text-transform: capitalize;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Culture Note ───────────────────── */
+  .culture-note {
+    font-size: 0.78rem;
+    font-style: italic;
+    color: var(--muted-lt);
+    margin-top: 0.45rem;
+    line-height: 1.4;
+    padding-left: 0.6rem;
+    border-left: 2px solid var(--border);
+  }
+
+  /* ── Dietary Filters ────────────────── */
   .filters {
     display: none;
     flex-wrap: wrap;
-    gap: 0.35rem;
-    margin-bottom: 0.5rem;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
     align-items: center;
   }
   .filters.visible { display: flex; }
   .filters-label {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--muted-lt);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     width: 100%;
     margin-bottom: 0.15rem;
   }
   .filter-btn {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 0.75rem;
     font-weight: 600;
-    padding: 0.3rem 0.65rem;
+    padding: 0.32rem 0.75rem;
     border-radius: 100px;
     border: 1.5px solid var(--border);
     background: var(--surface);
@@ -536,72 +602,100 @@ HTML_PAGE = """
     transition: all 0.15s;
     user-select: none;
   }
-  .filter-btn:hover { border-color: #bbb; }
+  .filter-btn:hover { border-color: var(--indigo); color: var(--indigo); }
+  .filter-btn:focus-visible { outline: 2px solid var(--indigo); outline-offset: 1px; }
   .filter-btn.on {
-    background: var(--accent2);
+    background: var(--indigo);
     color: #fff;
-    border-color: var(--accent2);
+    border-color: var(--indigo);
+    box-shadow: 0 2px 8px rgba(91,110,225,0.25);
   }
   .filter-meta {
     display: none;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.6rem;
+    gap: 0.85rem;
+    margin-bottom: 0.7rem;
     font-size: 0.82rem;
     color: var(--muted);
+    padding: 0 0.1rem;
   }
   .filter-meta.visible { display: flex; }
-  .filter-meta label { cursor: pointer; display: flex; align-items: center; gap: 0.3rem; }
-  .filter-meta input[type="checkbox"] { accent-color: var(--accent2); }
-  .filter-count { font-weight: 600; }
-  .menu-item.dimmed { opacity: 0.3; pointer-events: none; }
+  .filter-meta label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 500;
+  }
+  .filter-meta input[type="checkbox"] { accent-color: var(--indigo); width: 15px; height: 15px; }
+  .filter-count { font-weight: 700; color: var(--text); }
+
+  /* ── Filter States ──────────────────── */
+  .menu-item.dimmed { opacity: 0.25; pointer-events: none; filter: grayscale(0.5); }
   .menu-item.hidden { display: none; }
   .warn-badge {
     display: inline-block;
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: #fff;
-    background: var(--accent);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: #fef2f2;
+    border: 1px solid #fecaca;
     border-radius: 100px;
-    padding: 0.1rem 0.5rem;
+    padding: 0.15rem 0.55rem;
     margin-top: 0.35rem;
-    margin-right: 0.25rem;
+    margin-right: 0.3rem;
   }
 
+  /* ── Raw Block ──────────────────────── */
   .raw-block {
     white-space: pre-wrap;
-    background: #f9f6f1;
+    background: var(--surface-2);
     border: 1px solid var(--border);
-    padding: 1rem;
+    padding: 1rem 1.2rem;
     border-radius: var(--radius-sm);
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--muted);
+    font-family: 'SF Mono', 'Fira Code', monospace;
   }
 
-  @media (max-width: 480px) {
-    body { padding: 0.75rem; }
-    .container { padding: 1.25rem 1.25rem 1.75rem; }
-    .header .brand { font-size: 1.6rem; }
+  /* ── Reduced Motion ─────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    .menu-item:hover { transform: none; }
+  }
+
+  /* ── Mobile ─────────────────────────── */
+  @media (max-width: 520px) {
+    .sticky-header { padding: 0.7rem 1rem; }
+    .header .brand { font-size: 1.15rem; }
+    .header .tagline { display: none; }
+    .container { padding: 1rem 1rem 2.5rem; }
+    .controls-bar { padding: 0.8rem 1rem; }
     .item-top { flex-direction: column; gap: 0.3rem; }
+    .dish-photo { height: 140px; }
+    .menu-item { padding: 0.85rem 1rem; }
   }
 </style>
 </head>
 <body>
-<div class="container">
+<div class="sticky-header">
   <div class="header">
     <div class="brand">MenYomi <span class="jp">メニヨミ</span></div>
     <div class="tagline">Read any Japanese menu</div>
   </div>
-  <div class="divider"></div>
-  <div class="controls">
-    <input type="file" id="fileInput" accept="image/*" />
-    <button id="translateBtn" onclick="handleTranslate()">Translate</button>
-  </div>
-  <div>
-    <button id="exportBtn" onclick="handleExport()" disabled>Download Menu Page</button>
+</div>
+<div class="container">
+  <div class="controls-bar">
+    <div class="controls">
+      <input type="file" id="fileInput" accept="image/*" />
+      <button id="translateBtn" onclick="handleTranslate()">Translate</button>
+    </div>
+    <div class="export-row">
+      <button id="exportBtn" onclick="handleExport()" disabled>Download Menu Page</button>
+    </div>
   </div>
   <div id="status"></div>
-  <div class="spinner-wrap" id="spinnerWrap"><div class="spinner"></div></div>
+  <div class="spinner-wrap" id="spinnerWrap"><div class="spinner"></div><div class="spinner-label">Reading menu…</div></div>
   <div class="filters" id="filterBar">
     <div class="filters-label">Dietary filters</div>
     <button class="filter-btn" data-filter="vegetarian" onclick="toggleFilter(this)">Vegetarian</button>
