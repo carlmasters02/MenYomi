@@ -21,6 +21,11 @@ PROVIDERS = {
         "key_env": ["AIAND_API_KEY"],
         "default_model": os.getenv("AIAND_MODEL", ""),
     },
+    "nosana": {
+        "base_url": os.getenv("NOSANA_URL", ""),
+        "key_env": ["NOSANA_API_KEY"],
+        "default_model": os.getenv("NOSANA_MODEL", ""),
+    },
 }
 
 
@@ -28,7 +33,10 @@ def _client(provider):
     cfg = PROVIDERS[provider]
     key = next((os.getenv(e) for e in cfg["key_env"] if os.getenv(e)), None)
     if not key:
-        raise RuntimeError(f"No API key set for '{provider}' (env: {cfg['key_env']})")
+        if provider == "nosana":
+            key = "EMPTY"  # vLLM servers accept any key
+        else:
+            raise RuntimeError(f"No API key set for '{provider}' (env: {cfg['key_env']})")
     if not cfg["base_url"]:
         raise RuntimeError(f"No base_url configured for '{provider}'")
     return OpenAI(api_key=key, base_url=cfg["base_url"])

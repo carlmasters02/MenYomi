@@ -1,4 +1,5 @@
 import json
+import os
 import re
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
@@ -107,6 +108,26 @@ def _salvage_items(text: str) -> list | None:
     except json.JSONDecodeError:
         return None
 
+
+def _ocr(image_bytes: bytes) -> str:
+    """Try Nosana first; fall back to Qwen if it fails, is empty, or isn't configured."""
+    nosana_url = os.getenv("NOSANA_URL", "")
+    if nosana_url:
+        try:
+            result = vision("nosana", image_bytes, PROMPT, model=os.getenv("NOSANA_MODEL"))
+            if result and result.strip():
+                print("OCR engine used:", "nosana")
+                return result
+            print("Nosana returned empty — falling back to Qwen")
+        except Exception as e:
+            print(f"Nosana OCR failed ({e}) — falling back to Qwen")
+
+    # Qwen fallback
+    result = vision("qwen", image_bytes, PROMPT, model="qwen3-vl-plus")
+    print("OCR engine used:", "qwen")
+    return result
+
+
 class AgentRequest(BaseModel):
     prompt: str
     provider: str = "qwen"
@@ -128,9 +149,9 @@ def agent(req: AgentRequest):
 @app.post("/parse-menu")
 async def parse_menu(file: UploadFile = File(...)):
     image_bytes = await file.read()
-    # Step 1 — OCR
+    # Step 1 — OCR (Nosana primary, Qwen fallback)
     try:
-        raw = vision("qwen", image_bytes, PROMPT, model="qwen3-vl-plus")
+        raw = _ocr(image_bytes)
     except Exception as e:
         raise HTTPException(502, f"OCR failed: {e}")
     cleaned = _strip_fences(raw)
@@ -139,6 +160,9 @@ async def parse_menu(file: UploadFile = File(...)):
     except json.JSONDecodeError:
         return {"items": [], "raw": raw}
 
+    # Normalize: handle both {"items": [...]} and bare [...] shapes
+    if isinstance(ocr_data, list):
+        ocr_data = {"items": ocr_data}
     items = ocr_data.get("items", [])
     if not items:
         return ocr_data
