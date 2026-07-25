@@ -321,8 +321,11 @@ body{
 .speak.playing{background:var(--lantern);color:#1a1206;animation:pulse 1s ease-in-out infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 6px rgba(232,163,61,.2)}}
 .order-line{margin-top:10px;font-size:12px;color:var(--sumi-soft);background:rgba(27,23,18,.04);
-  padding:8px 11px;border-radius:9px;display:flex;align-items:center;gap:8px}
+  padding:8px 11px;border-radius:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .order-line b{color:var(--sumi)}
+.dish-nutrition{margin-top:10px;padding-top:8px;border-top:1px solid var(--washi-line);
+  font-size:11px;color:#9a8d72;line-height:1.4}
+.dish-nutrition b{color:var(--sumi-soft);font-weight:700}
 
 /* ---------- feature showcase ---------- */
 .features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
@@ -714,9 +717,17 @@ async function updatePrices(){
 
 // ---------- render ----------
 function romajiHint(item){
-  // light touch: only show order line if we have a jp_name
   if(!item.jp_name)return '';
-  return `<div class="order-line">🗣️ To order: <b>「${item.jp_name}を ください」</b></div>`;
+  const romaji=item.romaji?` &middot; say: <b>"${item.romaji} o kudasai"</b>`:'';
+  return `<div class="order-line">\u{1F5E3}\uFE0F To order: <b>\u300C${item.jp_name}\u3092 \u304F\u3060\u3055\u3044\u300D</b>${romaji}</div>`;
+}
+function nutritionStrip(item){
+  try{
+    const n=item.nutrition;if(!n)return '';
+    const cal=n.calories;if(cal==null)return '';
+    const p=n.protein_g??'-', f=n.fat_g??'-', c=n.carbs_g??'-';
+    return `<div class="dish-nutrition"><b>Est. nutrition</b> ~${cal} kcal &middot; Protein ${p}g &middot; Fat ${f}g &middot; Carbs ${c}g</div>`;
+  }catch(e){return '';}
 }
 function isSectionHeader(item){
   const price = item.price ? String(item.price).trim() : '';
@@ -760,6 +771,7 @@ function render(items){
       ${tags?`<div class="dish-tags">${tags}</div>`:''}
       ${item.culture_note?`<div class="dish-culture">${item.culture_note}</div>`:''}
       ${romajiHint(item)}
+      ${nutritionStrip(item)}
     `;
     menuCards.appendChild(d);
   });

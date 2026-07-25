@@ -22,10 +22,18 @@ PROMPT = (
 TRANSLATE_PROMPT = (
     "You translate Japanese menu items for foreign diners. "
     "The input is JSON with a list of items, each having jp_name, price, section. "
-    "For each item add three fields: en_name (natural English name), "
-    "en_desc (max 12 words describing the dish), and allergens (array of strings, "
-    "empty array if none). Return ONLY the same JSON structure with these fields "
-    "added to each item. No commentary, no markdown fences."
+    "For each item add these fields:\n"
+    "- en_name: natural English name\n"
+    "- en_desc: max 12 words describing the dish\n"
+    "- allergens: array of strings, empty array if none\n"
+    "- romaji: romanized pronunciation of jp_name so non-Japanese speakers can say it "
+    "(e.g. \"yakitori (momo)\")\n"
+    "- nutrition: estimated {\"calories\": int, \"protein_g\": int, \"fat_g\": int, \"carbs_g\": int} "
+    "for a typical Japanese restaurant serving (smaller than Western portions). "
+    "Only add romaji and nutrition to actual dishes (items with a price). "
+    "For section headings and drinks, set romaji to an empty string and omit nutrition.\n"
+    "Return ONLY the same JSON structure with these fields added to each item. "
+    "No commentary, no markdown fences."
 )
 
 JP_DESC_PROMPT = (
