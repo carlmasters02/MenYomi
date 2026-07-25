@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from providers import llm, vision, PROVIDERS
+from sandbox import run_code
 
 app = FastAPI(title="Agent Forge starter")
 
@@ -29,6 +30,12 @@ JP_DESC_PROMPT = (
     "a short natural Japanese description (max 15 characters) of the dish for local diners. "
     "Return ONLY the same JSON with jp_desc added to each item. "
     "No markdown, no commentary."
+)
+
+EXPORT_PROMPT = (
+    "Generate a complete standalone HTML document for this restaurant menu. "
+    "Include inline CSS, show each item's Japanese name, English name, price, "
+    "and descriptions. Return ONLY raw HTML, no markdown fences."
 )
 
 
@@ -168,6 +175,40 @@ async def parse_menu(file: UploadFile = File(...)):
 
     return {"items": with_jp_desc}
 
+
+class ExportRequest(BaseModel):
+    items: list
+
+
+@app.post("/export-menu")
+def export_menu(req: ExportRequest):
+    # Step 1 — Generate HTML via GMI
+    try:
+        raw_html = llm("gmi", EXPORT_PROMPT + "\n\n" + json.dumps(req.items), max_tokens=4000)
+    except Exception as e:
+        raise HTTPException(502, f"HTML generation failed: {e}")
+
+    html = _strip_fences(raw_html)
+
+    # Step 2 — Validate in Daytona sandbox
+    validated_items = None
+    try:
+        # Build validation code that counts item names in the HTML
+        names = [item.get("jp_name", "") for item in req.items if item.get("jp_name")]
+        validation_code = (
+            "html = " + repr(html) + "\n"
+            "names = " + repr(names) + "\n"
+            "count = sum(1 for n in names if n in html)\n"
+            "print(count)"
+        )
+        result = run_code(validation_code)
+        validated_items = int(result.strip())
+    except Exception as e:
+        print("SANDBOX VALIDATION ERROR:", e)
+
+    return {"html": html, "validated_items": validated_items}
+
+
 HTML_PAGE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -202,10 +243,38 @@ HTML_PAGE = """
     <input type="file" id="fileInput" accept="image/*" />
     <button id="translateBtn" onclick="handleTranslate()">Translate</button>
   </div>
+  <div style="margin-bottom:1rem;">
+    <button id="exportBtn" onclick="handleExport()" style="background:#2a9d8f;" disabled>Download Menu Page</button>
+  </div>
   <div id="status"></div>
   <div id="results"></div>
 </div>
 <script>
+let _menuItems = [];
+let exportPromise = null;
+
+function startExport(items) {
+  const btn = document.getElementById('exportBtn');
+  btn.textContent = 'Preparing download…';
+  btn.disabled = true;
+  exportPromise = (async () => {
+    const res = await fetch('/export-menu', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items }),
+    });
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    return res.json();
+  })();
+  exportPromise.then(() => {
+    btn.textContent = 'Download Menu Page';
+    btn.disabled = false;
+  }).catch(() => {
+    btn.textContent = 'Download Menu Page';
+    btn.disabled = false;
+  });
+}
+
 async function handleTranslate() {
   const fileInput = document.getElementById('fileInput');
   const status   = document.getElementById('status');
@@ -214,6 +283,7 @@ async function handleTranslate() {
 
   results.innerHTML = '';
   status.textContent = '';
+  exportPromise = null;
 
   if (!fileInput.files.length) {
     status.textContent = 'Please select an image first.';
@@ -236,7 +306,11 @@ async function handleTranslate() {
       return;
     }
     renderItems(data.items || []);
+    _menuItems = data.items || [];
     status.textContent = '';
+    if (_menuItems.length) {
+      startExport(_menuItems);
+    }
   } catch (err) {
     status.innerHTML = `<span class="error">${err.message}</span>`;
   } finally {
@@ -261,6 +335,34 @@ function renderItems(items) {
       ${item.allergens && item.allergens.length ? `<div style="font-size:0.8rem;color:#c1121f;margin-top:0.2rem;">Allergens: ${item.allergens.join(', ')}</div>` : ''}
     </div>
   `).join('');
+}
+
+async function handleExport() {
+  if (!exportPromise) return;
+  const btn    = document.getElementById('exportBtn');
+  const status = document.getElementById('status');
+  btn.disabled = true;
+  btn.textContent = 'Preparing download…';
+  try {
+    const data = await exportPromise;
+    const blob = new Blob([data.html], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'menu.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    status.textContent = data.validated_items != null
+      ? `Downloaded — ${data.validated_items} items validated.`
+      : 'Downloaded (sandbox validation unavailable).';
+  } catch (err) {
+    status.innerHTML = `<span class="error">${err.message}</span>`;
+  } finally {
+    btn.textContent = 'Download Menu Page';
+    btn.disabled = false;
+  }
 }
 </script>
 </body>
