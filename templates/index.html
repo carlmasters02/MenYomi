@@ -272,7 +272,8 @@ body{
 .chip.on{background:var(--matcha);color:#0f150b;border-color:var(--matcha)}
 
 /* empty + loading states */
-.state{display:grid;place-items:center;text-align:center;min-height:400px;padding:20px}
+.state{display:flex;align-items:center;justify-content:center;text-align:center;min-height:400px;padding:20px}
+.state>div{display:flex;flex-direction:column;align-items:center;justify-content:center;max-width:30em}
 .state-ico{font-size:46px;margin-bottom:16px;opacity:.8}
 .state h3{font-family:"Manrope";font-weight:800;font-size:20px;margin-bottom:8px}
 .state p{color:var(--paper-mute);font-size:14.5px;max-width:26em;line-height:1.55}
@@ -282,10 +283,15 @@ body{
 .load-steps{margin-top:14px;font-size:13px;color:var(--paper-mute);min-height:20px}
 
 /* menu cards (paper) */
-.menu-cards{display:flex;flex-direction:column;gap:16px}
-.sec-label{font-family:"Shippori Mincho",serif;font-weight:700;font-size:15px;color:var(--lantern);
-  display:flex;align-items:center;gap:12px;margin:8px 2px 2px}
-.sec-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(232,163,61,.4),transparent)}
+.menu-cards{display:flex;flex-direction:column;gap:14px}
+.sec-label{font-family:"Shippori Mincho",serif;font-weight:800;font-size:17px;color:var(--lantern);
+  display:flex;align-items:center;gap:14px;margin:22px 2px 4px;letter-spacing:.03em}
+.sec-label:first-child{margin-top:2px}
+.sec-label::before{content:"";width:5px;height:22px;background:linear-gradient(180deg,var(--lantern),var(--shu));
+  border-radius:3px;flex-shrink:0}
+.sec-label .sec-en{font-family:"Manrope";font-weight:700;font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--paper-mute)}
+.sec-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(232,163,61,.45),transparent)}
 .dish{background:linear-gradient(180deg,var(--washi),var(--washi-2));color:var(--sumi);border-radius:16px;
   padding:18px 20px;position:relative;overflow:hidden;
   box-shadow:0 14px 34px -18px rgba(0,0,0,.6);border-left:3px solid var(--shu);
@@ -638,18 +644,36 @@ function romajiHint(item){
   if(!item.jp_name)return '';
   return `<div class="order-line">🗣️ To order: <b>「${item.jp_name}を ください」</b></div>`;
 }
+function isSectionHeader(item){
+  const name=(item.jp_name||'').trim();
+  const sec=(item.section||'').trim();
+  if(sec && name && name===sec) return true;
+  const hasDishContent = item.price || item.en_desc || (item.allergens&&item.allergens.length) || item.jp_desc;
+  if(name && !hasDishContent && (name===sec || !item.en_name)) return true;
+  return false;
+}
+function addSectionLabel(jpName,enName){
+  const s=document.createElement('div');s.className='sec-label jp';
+  s.innerHTML=`<span>${jpName}</span>${enName?`<span class="sec-en">${enName}</span>`:''}`;
+  menuCards.appendChild(s);
+}
 function render(items){
-  currentItems=items;menuCards.innerHTML='';
+  currentItems=[];menuCards.innerHTML='';
   emptyState.style.display='none';toolbar.style.display='flex';
   buildFilters();
-  let lastSection=null;
-  items.forEach((item,idx)=>{
+  let lastSection=null, cardIdx=0;
+  items.forEach((item)=>{
+    if(isSectionHeader(item)){
+      const name=(item.jp_name||'').trim();
+      if(name!==lastSection){lastSection=name;addSectionLabel(name,item.en_name||'');}
+      return;
+    }
     if(item.section&&item.section!==lastSection){
       lastSection=item.section;
-      const s=document.createElement('div');s.className='sec-label jp';s.textContent=item.section;
-      menuCards.appendChild(s);
+      addSectionLabel(item.section,'');
     }
-    const d=document.createElement('div');d.className='dish';d.style.animationDelay=(idx*60)+'ms';
+    currentItems.push(item);
+    const d=document.createElement('div');d.className='dish';d.style.animationDelay=(cardIdx*60)+'ms';cardIdx++;
     const tags=(item.allergens||[]).map(a=>`<span class="tag">${a}</span>`).join('');
     d.innerHTML=`
       <div class="dish-top">
