@@ -29,6 +29,63 @@ def _strip_fences(text: str) -> str:
     cleaned = re.sub(r"^```(?:json)?\s*", "", text.strip(), flags=re.IGNORECASE)
     return re.sub(r"\s*```$", "", cleaned, flags=re.IGNORECASE)
 
+
+def _salvage_items(text: str) -> list | None:
+    """Try to extract complete items from a truncated JSON response."""
+    cleaned = _strip_fences(text)
+    # Full parse attempt
+    try:
+        data = json.loads(cleaned)
+        if isinstance(data, list):
+            return data
+        if isinstance(data, dict) and "items" in data:
+            return data["items"]
+    except json.JSONDecodeError:
+        pass
+
+    # Locate the items array: prefer "items": [ ... , fall back to first [
+    m = re.search(r'"items"\s*:\s*\[', cleaned)
+    array_start = m.end() if m else (cleaned.find("[") + 1 or None)
+    if not array_start:
+        return None
+
+    body = cleaned[array_start:]
+
+    # Walk characters tracking brace depth (string-aware) to find last complete {}
+    depth = 0
+    last_complete = -1
+    in_string = False
+    escape_next = False
+    for i, ch in enumerate(body):
+        if escape_next:
+            escape_next = False
+            continue
+        if in_string:
+            if ch == "\\":
+                escape_next = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                last_complete = i
+
+    if last_complete < 0:
+        return None
+
+    # Slice up to the last complete object and wrap in an array
+    fragment = body[: last_complete + 1]
+    try:
+        items = json.loads(f"[{fragment}]")
+        return items if isinstance(items, list) else None
+    except json.JSONDecodeError:
+        return None
+
 class AgentRequest(BaseModel):
     prompt: str
     provider: str = "qwen"
@@ -79,7 +136,12 @@ async def parse_menu(file: UploadFile = File(...)):
         enriched = json.loads(_strip_fences(raw_tr))
     except Exception as e:
         print("PARSE ERROR:", e)
-        # Parse failed — keep original items so the page still shows Japanese names
+        # Try to salvage complete items from the truncated response
+        salvaged = _salvage_items(raw_tr)
+        if salvaged:
+            print(f"SALVAGED {len(salvaged)} complete items")
+            return {"items": salvaged}
+        # Nothing recoverable — keep original items so the page still shows Japanese names
         return ocr_data
 
     return {"items": enriched}
