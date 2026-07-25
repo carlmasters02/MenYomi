@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>About the Developer — MenYomi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/static/shared.css" />
+<style>
+.dev-card{display:grid;grid-template-columns:220px 1fr;gap:40px;margin-top:44px;align-items:start}
+@media(max-width:640px){.dev-card{grid-template-columns:1fr;gap:28px}}
+.dev-photo{width:220px;height:220px;border-radius:22px;overflow:hidden;position:relative;
+  background:linear-gradient(180deg,var(--ink-600),var(--ink-800));border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 20px 50px -20px rgba(0,0,0,.6);display:grid;place-items:center}
+.dev-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.dev-photo .placeholder{text-align:center;color:var(--paper-mute);padding:20px}
+.dev-photo .placeholder .ico{font-size:40px;margin-bottom:10px}
+.dev-photo .placeholder small{font-size:11.5px;line-height:1.4;display:block}
+@media(max-width:640px){.dev-photo{width:160px;height:160px}}
+.dev-name{font-family:"Manrope";font-weight:800;font-size:30px;letter-spacing:-.02em;margin-bottom:4px}
+.dev-role{color:var(--lantern);font-weight:700;font-size:15px;margin-bottom:20px}
+.dev-bio p{color:#c4c4d8;line-height:1.7;font-size:15.5px;margin-bottom:14px}
+.dev-links{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+.dev-links a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;font-size:14px;
+  color:var(--paper-text);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+  padding:10px 16px;border-radius:11px;transition:all .2s}
+.dev-links a:hover{background:rgba(232,163,61,.1);border-color:var(--lantern);color:var(--lantern)}
+.edit-flag{color:var(--shu);font-weight:700}
+</style>
+</head>
+<body>
+<div class="atmos"></div><div class="grain"></div>
+
+<nav class="nav"><div class="nav-in">
+  <a class="brand" href="/"><div class="brand-seal jp">読</div><div class="brand-name">Men<b>Yomi</b><span class="brand-jp">メニヨミ</span></div></a>
+  <div class="nav-links">
+    <a href="/#app">Translate</a><a href="/#features">Features</a><a href="/#how">How it works</a>
+    <a class="nav-cta" href="/#app">Read a menu →</a>
+  </div>
+</div></nav>
+
+<main class="page page-narrow">
+  <a class="back-link" href="/">← Back home</a>
+  <span class="eyebrow">About the developer</span>
+  <h1>The person behind <span class="jp">メニヨミ</span>.</h1>
+
+  <div class="dev-card">
+    <div class="dev-photo">
+      <!-- TO ADD YOUR PHOTO: replace the placeholder div below with:
+           <img src="/static/me.jpg" alt="Your Name" />
+           and drop me.jpg into your static folder. -->
+      <div class="placeholder">
+        <div class="ico">📷</div>
+        <small>Your photo here<br>(replace in about.html)</small>
+      </div>
+    </div>
+    <div class="dev-bio">
+      <!-- EDIT: your name -->
+      <div class="dev-name">Your Name</div>
+      <!-- EDIT: your role / tagline -->
+      <div class="dev-role">Cybersecurity student · Solo builder</div>
+
+      <!-- EDIT: your bio. A few short paragraphs work best. -->
+      <p><span class="edit-flag">[Edit this in about.html]</span> Write a short intro here — who you are, what you're studying or working on, and what pulled you toward building things.</p>
+      <p>MenYomi started at a Tokyo hackathon as a solo build against multi-person teams, and grew into a full product afterward. Tell the story you want to tell: what you learned wiring six AI platforms together, why the problem matters to you, or where you want to take it next.</p>
+      <p>Keep it human — a couple of honest paragraphs beat a wall of buzzwords.</p>
+
+      <div class="dev-links">
+        <!-- EDIT: your real links, or remove the ones you don't use -->
+        <a href="#">🐙 GitHub</a>
+        <a href="#">💼 LinkedIn</a>
+        <a href="#">✉️ Email</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="muted-note" style="margin-top:40px">
+    <b>How to edit this page:</b> open <code>about.html</code> and look for the <span class="edit-flag">EDIT</span> comments — replace the name, role, bio paragraphs, and links with your own. To add your photo, drop an image into your static folder and swap the placeholder for an <code>&lt;img&gt;</code> tag (instructions are in the file's comments).
+  </div>
+</main>
+
+<footer class="footer"><div class="footer-in">
+  <p>© 2026 MenYomi · Read any Japanese menu</p>
+  <nav class="footer-nav"><a href="/about">About</a><a href="/stack">The stack</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></nav>
+</div></footer>
+</body>
+</html>

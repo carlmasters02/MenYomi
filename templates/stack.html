@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Stack — MenYomi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/static/shared.css" />
+<style>
+.stack-list{display:flex;flex-direction:column;gap:18px;margin-top:44px}
+.stack-item{background:linear-gradient(180deg,var(--ink-700),var(--ink-800));border:1px solid rgba(255,255,255,.07);
+  border-radius:20px;padding:28px 30px;display:grid;grid-template-columns:56px 1fr;gap:22px;align-items:start;
+  transition:transform .3s var(--ease),border-color .3s}
+.stack-item:hover{transform:translateY(-4px);border-color:rgba(232,163,61,.3)}
+.stack-mark{width:56px;height:56px;border-radius:15px;display:grid;place-items:center;font-family:"Manrope";
+  font-weight:800;font-size:24px;color:#fff;box-shadow:0 8px 22px rgba(0,0,0,.4)}
+.stack-item h3{font-family:"Manrope";font-weight:800;font-size:20px;margin-bottom:3px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.stack-role{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--lantern);
+  background:rgba(232,163,61,.1);padding:4px 10px;border-radius:20px;border:1px solid rgba(232,163,61,.25)}
+.stack-item p{color:#c4c4d8;line-height:1.65;font-size:15px;margin-top:8px}
+.stack-item .jp-sub{font-family:"Shippori Mincho",serif;color:var(--paper-mute);font-size:13px;margin-top:2px}
+@media(max-width:560px){.stack-item{grid-template-columns:1fr}.stack-mark{width:48px;height:48px}}
+</style>
+</head>
+<body>
+<div class="atmos"></div><div class="grain"></div>
+
+<nav class="nav"><div class="nav-in">
+  <a class="brand" href="/"><div class="brand-seal jp">読</div><div class="brand-name">Men<b>Yomi</b><span class="brand-jp">メニヨミ</span></div></a>
+  <div class="nav-links">
+    <a href="/#app">Translate</a><a href="/#features">Features</a><a href="/#how">How it works</a>
+    <a class="nav-cta" href="/#app">Read a menu →</a>
+  </div>
+</div></nav>
+
+<main class="page">
+  <a class="back-link" href="/">← Back home</a>
+  <span class="eyebrow">Under the hood</span>
+  <h1>Six specialists, <span class="jp">一</span> one clean result.</h1>
+  <p class="lede">MenYomi isn't one model doing everything — it's a small team of purpose-built systems, each handling the step it's best at. Here's who does what.</p>
+
+  <div class="stack-list">
+
+    <div class="stack-item">
+      <div class="stack-mark" style="background:linear-gradient(180deg,#12f00f,#0aa80a)">N</div>
+      <div>
+        <h3>Nosana <span class="stack-role">Reads the menu</span></h3>
+        <div class="jp-sub">読み取り · self-hosted OCR</div>
+        <p>The menu image first goes to a Nanonets OCR model hosted on Nosana's decentralized GPU network. Running the vision model on dedicated hardware means MenYomi can read handwritten boards and awkward photos without depending on a single provider — and it falls back gracefully if the GPU is ever offline.</p>
+      </div>
+    </div>
+
+    <div class="stack-item">
+      <div class="stack-mark" style="background:linear-gradient(180deg,#7a75f5,#5b52d6)">Q</div>
+      <div>
+        <h3>Qwen Cloud <span class="stack-role">Vision backup + reading</span></h3>
+        <div class="jp-sub">視覚 · multimodal fallback</div>
+        <p>Qwen's multimodal model is the reliable second reader. Strong on Japanese text, it steps in instantly whenever the self-hosted OCR is unavailable, so a menu always gets read — the app never leaves you staring at a spinner.</p>
+      </div>
+    </div>
+
+    <div class="stack-item">
+      <div class="stack-mark" style="background:linear-gradient(180deg,#00c6b5,#009a8c)">G</div>
+      <div>
+        <h3>GMI Cloud <span class="stack-role">Translates & enriches</span></h3>
+        <div class="jp-sub">翻訳 · the orchestrator</div>
+        <p>Once the dishes are read, GMI turns them into something useful: natural English names, short descriptions, allergen tags, and a one-line cultural note per dish. It's the layer that takes raw text and makes it genuinely helpful for a diner.</p>
+      </div>
+    </div>
+
+    <div class="stack-item">
+      <div class="stack-mark" style="background:linear-gradient(180deg,#ec5a5f,#c5343b)">&amp;</div>
+      <div>
+        <h3>ai&amp; <span class="stack-role">Japanese descriptions</span></h3>
+        <div class="jp-sub">日本語 · Japan-based inference</div>
+        <p>Translation shouldn't only go one way. ai&amp; — running on infrastructure inside Japan — writes natural Japanese descriptions so you can point at exactly what you want at the counter, and so locals reading over your shoulder see something fluent.</p>
+      </div>
+    </div>
+
+    <div class="stack-item">
+      <div class="stack-mark" style="background:linear-gradient(180deg,#5a8dee,#3b6fd4)">D</div>
+      <div>
+        <h3>Daytona <span class="stack-role">Runs code safely</span></h3>
+        <div class="jp-sub">実行 · secure sandbox</div>
+        <p>When MenYomi builds your downloadable menu page, an AI generates the HTML and Daytona runs it inside an isolated sandbox to validate it before it ever reaches you. Agent-written code executes in a safe, disposable environment — never on your machine or the server directly.</p>
+      </div>
+    </div>
+
+    <div class="stack-item">
+      <div class="stack-mark" style="background:linear-gradient(180deg,#b06ef0,#8f4fd8)">Q</div>
+      <div>
+        <h3>Qoder <span class="stack-role">Where it was built</span></h3>
+        <div class="jp-sub">開発 · agentic IDE</div>
+        <p>The entire application was developed in Qoder, an agentic coding environment. Its repo-aware assistant and multi-agent workflow made it possible for a single developer to wire six platforms together into one working product.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="muted-note" style="margin-top:32px">
+    Built as a solo project at the Agent Forge AI Hackathon: Tokyo — and taken further as a real product since.
+  </div>
+</main>
+
+<footer class="footer"><div class="footer-in">
+  <p>© 2026 MenYomi · Read any Japanese menu</p>
+  <nav class="footer-nav"><a href="/about">About</a><a href="/stack">The stack</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></nav>
+</div></footer>
+</body>
+</html>
