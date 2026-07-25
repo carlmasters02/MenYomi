@@ -24,6 +24,13 @@ TRANSLATE_PROMPT = (
     "added to each item. No commentary, no markdown fences."
 )
 
+JP_DESC_PROMPT = (
+    "For each menu item in this JSON, add a field 'jp_desc' — "
+    "a short natural Japanese description (max 15 characters) of the dish for local diners. "
+    "Return ONLY the same JSON with jp_desc added to each item. "
+    "No markdown, no commentary."
+)
+
 
 def _strip_fences(text: str) -> str:
     cleaned = re.sub(r"^```(?:json)?\s*", "", text.strip(), flags=re.IGNORECASE)
@@ -144,7 +151,22 @@ async def parse_menu(file: UploadFile = File(...)):
         # Nothing recoverable — keep original items so the page still shows Japanese names
         return ocr_data
 
-    return {"items": enriched}
+    # Step 3 — Japanese description enrichment
+    try:
+        raw_jd = llm("aiand", JP_DESC_PROMPT + "\n\n" + json.dumps(enriched), max_tokens=4000)
+    except Exception as e:
+        print("AIAND CALL ERROR:", e)
+        return {"items": enriched}
+
+    print("AIAND RAW:", repr(raw_jd))
+
+    try:
+        with_jp_desc = json.loads(_strip_fences(raw_jd))
+    except Exception as e:
+        print("AIAND PARSE ERROR:", e)
+        return {"items": enriched}
+
+    return {"items": with_jp_desc}
 
 HTML_PAGE = """
 <!DOCTYPE html>
@@ -231,6 +253,7 @@ function renderItems(items) {
   results.innerHTML = items.map(item => `
     <div class="menu-item">
       <div class="jp">${item.jp_name}</div>
+      ${item.jp_desc ? `<div style="color:#888;font-size:0.85rem;margin-top:0.1rem;">${item.jp_desc}</div>` : ''}
       ${item.en_name ? `<div class="en">${item.en_name}</div>` : ''}
       ${item.section ? `<div style="font-style:italic;color:#888;font-size:0.85rem;">${item.section}</div>` : ''}
       <div class="price">${item.price ? '¥' + item.price : ''}</div>
