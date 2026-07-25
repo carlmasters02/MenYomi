@@ -451,6 +451,67 @@ HTML_PAGE = """
     line-height: 1.35;
   }
 
+  /* ── Dietary Filters ───────────────────── */
+  .filters {
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+    align-items: center;
+  }
+  .filters.visible { display: flex; }
+  .filters-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    width: 100%;
+    margin-bottom: 0.15rem;
+  }
+  .filter-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.65rem;
+    border-radius: 100px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .filter-btn:hover { border-color: #bbb; }
+  .filter-btn.on {
+    background: var(--accent2);
+    color: #fff;
+    border-color: var(--accent2);
+  }
+  .filter-meta {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .filter-meta.visible { display: flex; }
+  .filter-meta label { cursor: pointer; display: flex; align-items: center; gap: 0.3rem; }
+  .filter-meta input[type="checkbox"] { accent-color: var(--accent2); }
+  .filter-count { font-weight: 600; }
+  .menu-item.dimmed { opacity: 0.3; pointer-events: none; }
+  .menu-item.hidden { display: none; }
+  .warn-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border-radius: 100px;
+    padding: 0.1rem 0.5rem;
+    margin-top: 0.35rem;
+    margin-right: 0.25rem;
+  }
+
   .raw-block {
     white-space: pre-wrap;
     background: #f9f6f1;
@@ -485,11 +546,104 @@ HTML_PAGE = """
   </div>
   <div id="status"></div>
   <div class="spinner-wrap" id="spinnerWrap"><div class="spinner"></div></div>
+  <div class="filters" id="filterBar">
+    <div class="filters-label">Dietary filters</div>
+    <button class="filter-btn" data-filter="vegetarian" onclick="toggleFilter(this)">Vegetarian</button>
+    <button class="filter-btn" data-filter="no_pork" onclick="toggleFilter(this)">No Pork</button>
+    <button class="filter-btn" data-filter="no_shellfish" onclick="toggleFilter(this)">No Shellfish</button>
+    <button class="filter-btn" data-filter="no_egg" onclick="toggleFilter(this)">No Egg</button>
+    <button class="filter-btn" data-filter="no_dairy" onclick="toggleFilter(this)">No Dairy</button>
+    <button class="filter-btn" data-filter="no_gluten" onclick="toggleFilter(this)">No Wheat/Gluten</button>
+    <button class="filter-btn" data-filter="no_soy" onclick="toggleFilter(this)">No Soy</button>
+  </div>
+  <div class="filter-meta" id="filterMeta">
+    <span class="filter-count" id="filterCount"></span>
+    <label><input type="checkbox" id="hideToggle" onchange="applyFilters()" /> Hide instead of dim</label>
+  </div>
   <div id="results"></div>
 </div>
 <script>
 let _menuItems = [];
 let exportPromise = null;
+
+const FILTER_RULES = {
+  vegetarian:    { allergens: ['meat','pork','beef','chicken','fish','shrimp','shellfish','egg','dashi','bonito','katsuobushi'],
+                   text: ['pork','beef','chicken','bacon','ham','shrimp','prawn','crab','lobster','fish','tuna','salmon','bonito','meat','katsu','tonkotsu','chashu','yakitori'] },
+  no_pork:       { allergens: ['pork','meat','bacon','ham'],
+                   text: ['pork','bacon','ham','tonkotsu','chashu','char siu'] },
+  no_shellfish:  { allergens: ['shellfish','shrimp','prawn','crab','lobster'],
+                   text: ['shrimp','prawn','crab','lobster','shellfish','crawfish','ebi','kani'] },
+  no_egg:        { allergens: ['egg'],
+                   text: ['egg','tamago','omelet','omelette'] },
+  no_dairy:      { allergens: ['dairy','milk','butter','cheese','cream'],
+                   text: ['butter','cream','cheese','milk','dairy'] },
+  no_gluten:     { allergens: ['gluten','wheat','soy sauce','noodle','ramen','udon','somen'],
+                   text: ['wheat','gluten','soy sauce','noodle','ramen','udon','somen','breaded','flour'] },
+  no_soy:        { allergens: ['soy','soy sauce','tofu','miso','edamame'],
+                   text: ['tofu','miso','soy','edamame','natto'] },
+};
+
+function toggleFilter(btn) {
+  btn.classList.toggle('on');
+  applyFilters();
+}
+
+function getConflicts(item) {
+  const allergens = (item.allergens || []).map(a => a.toLowerCase());
+  const text = ((item.en_name || '') + ' ' + (item.en_desc || '')).toLowerCase();
+  const active = [...document.querySelectorAll('.filter-btn.on')].map(b => b.dataset.filter);
+  const hits = [];
+  active.forEach(f => {
+    const rule = FILTER_RULES[f];
+    if (!rule) return;
+    const matched = rule.allergens.some(a => allergens.some(al => al.includes(a)))
+                 || rule.text.some(t => text.includes(t));
+    if (matched) hits.push(f.replace(/^no_/, '').replace(/_/g, ' '));
+  });
+  return hits;
+}
+
+function applyFilters() {
+  const cards = document.querySelectorAll('.menu-item[data-idx]');
+  const hideMode = document.getElementById('hideToggle').checked;
+  const activeFilters = document.querySelectorAll('.filter-btn.on').length;
+  const filterBar = document.getElementById('filterMeta');
+  const countEl  = document.getElementById('filterCount');
+
+  if (!activeFilters) {
+    filterBar.classList.remove('visible');
+    cards.forEach(c => {
+      c.classList.remove('dimmed', 'hidden');
+      c.querySelectorAll('.warn-badge').forEach(b => b.remove());
+    });
+    return;
+  }
+
+  filterBar.classList.add('visible');
+  let shown = 0;
+  cards.forEach(c => {
+    const idx = parseInt(c.dataset.idx);
+    const item = _menuItems[idx];
+    if (!item) return;
+    const conflicts = getConflicts(item);
+    // Remove old badges
+    c.querySelectorAll('.warn-badge').forEach(b => b.remove());
+    c.classList.remove('dimmed', 'hidden');
+    if (conflicts.length) {
+      conflicts.forEach(label => {
+        const badge = document.createElement('span');
+        badge.className = 'warn-badge';
+        badge.textContent = `\u26A0 contains ${label}`;
+        c.appendChild(badge);
+      });
+      if (hideMode) c.classList.add('hidden');
+      else c.classList.add('dimmed');
+    } else {
+      shown++;
+    }
+  });
+  countEl.textContent = `Showing ${shown} of ${_menuItems.length} dishes`;
+}
 
 function startExport(items) {
   const btn = document.getElementById('exportBtn');
@@ -523,6 +677,10 @@ async function handleTranslate() {
   results.innerHTML = '';
   status.textContent = '';
   exportPromise = null;
+  // Reset filters
+  document.querySelectorAll('.filter-btn.on').forEach(b => b.classList.remove('on'));
+  document.getElementById('filterBar').classList.remove('visible');
+  document.getElementById('filterMeta').classList.remove('visible');
 
   if (!fileInput.files.length) {
     status.textContent = 'Please select an image first.';
@@ -564,8 +722,14 @@ function renderItems(items) {
   const results = document.getElementById('results');
   if (!items.length) {
     results.innerHTML = '<p style="color:var(--muted)">No items found.</p>';
+    document.getElementById('filterBar').classList.remove('visible');
     return;
   }
+  // Show filter bar
+  document.getElementById('filterBar').classList.add('visible');
+  // Build a flat index map for filtering
+  const idxMap = new Map();
+  items.forEach((item, i) => idxMap.set(item, i));
   // Group by section
   const groups = {};
   items.forEach(item => {
@@ -577,11 +741,12 @@ function renderItems(items) {
   Object.keys(groups).forEach(sec => {
     if (sec) html += `<div class="section-header">${sec}</div>`;
     groups[sec].forEach(item => {
+      const idx = idxMap.get(item);
       const pills = (item.allergens && item.allergens.length)
         ? `<div class="allergens">${item.allergens.map(a => `<span class="pill">${a}</span>`).join('')}</div>`
         : '';
       html += `
-        <div class="menu-item">
+        <div class="menu-item" data-idx="${idx}">
           <div class="item-top">
             <div class="item-names">
               <div class="jp-name">${item.jp_name}</div>
@@ -597,6 +762,7 @@ function renderItems(items) {
     });
   });
   results.innerHTML = html;
+  applyFilters();
 }
 
 async function handleExport() {
