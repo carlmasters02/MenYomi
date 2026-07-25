@@ -2,7 +2,7 @@ import json
 import os
 import re
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -46,6 +46,14 @@ EXPORT_PROMPT = (
     "Generate a complete standalone HTML document for this restaurant menu. "
     "Include inline CSS, show each item's Japanese name, English name, price, "
     "and descriptions. Return ONLY raw HTML, no markdown fences."
+)
+
+PARSE_TEXT_PROMPT = (
+    "Parse the following Japanese menu text into JSON. "
+    "Return ONLY valid JSON in this exact shape: "
+    '{"items":[{"jp_name":"","price":"","section":""}]}. '
+    "Lines without a price are section headings — include them with an empty price string. "
+    "Preserve Japanese text exactly as written. No markdown, no commentary."
 )
 
 
@@ -111,6 +119,57 @@ def _salvage_items(text: str) -> list | None:
         return None
 
 
+def _enrich(items: list) -> dict:
+    """Run the full enrichment pipeline: translation, jp_desc, culture notes."""
+    # Step 1 — Translation
+    try:
+        raw_tr = llm("gmi", TRANSLATE_PROMPT + "\n\n" + json.dumps(items), max_tokens=4000)
+    except Exception as e:
+        print("GMI CALL ERROR:", e)
+        return {"items": items}
+    print("GMI RAW:", repr(raw_tr))
+
+    try:
+        enriched = json.loads(_strip_fences(raw_tr))
+    except Exception as e:
+        print("PARSE ERROR:", e)
+        salvaged = _salvage_items(raw_tr)
+        if salvaged:
+            print(f"SALVAGED {len(salvaged)} complete items")
+            return {"items": salvaged}
+        return {"items": items}
+
+    # Step 2 — Japanese description
+    try:
+        raw_jd = llm("aiand", JP_DESC_PROMPT + "\n\n" + json.dumps(enriched), max_tokens=4000)
+    except Exception as e:
+        print("AIAND CALL ERROR:", e)
+        return {"items": enriched}
+    print("AIAND RAW:", repr(raw_jd))
+
+    try:
+        with_jp_desc = json.loads(_strip_fences(raw_jd))
+    except Exception as e:
+        print("AIAND PARSE ERROR:", e)
+        return {"items": enriched}
+
+    # Step 3 — Cultural context
+    try:
+        raw_cn = llm("gmi", CULTURE_PROMPT + "\n\n" + json.dumps(with_jp_desc), max_tokens=4000)
+    except Exception as e:
+        print("GMI CULTURE CALL ERROR:", e)
+        return {"items": with_jp_desc}
+    print("GMI CULTURE RAW:", repr(raw_cn))
+
+    try:
+        with_culture = json.loads(_strip_fences(raw_cn))
+    except Exception as e:
+        print("GMI CULTURE PARSE ERROR:", e)
+        return {"items": with_jp_desc}
+
+    return {"items": with_culture}
+
+
 def _ocr(image_bytes: bytes) -> str:
     """Try Nosana first; fall back to Qwen if it fails, is empty, or isn't configured."""
     nosana_url = os.getenv("NOSANA_URL", "")
@@ -169,59 +228,45 @@ async def parse_menu(file: UploadFile = File(...)):
     if not items:
         return ocr_data
 
-    # Step 2 — Translation / enrichment
-    try:
-        raw_tr = llm("gmi", TRANSLATE_PROMPT + "\n\n" + json.dumps(items), max_tokens=4000)
-    except Exception as e:
-        print("GMI CALL ERROR:", e)
-        # Translation unavailable — return OCR-only data
-        return ocr_data
+    # Steps 2-4 — Enrichment pipeline (shared with /parse-text)
+    return _enrich(items)
 
-    print("GMI RAW:", repr(raw_tr))
 
+class ParseTextRequest(BaseModel):
+    text: str
+
+
+@app.post("/parse-text")
+def parse_text(req: ParseTextRequest):
+    if not req.text or not req.text.strip():
+        raise HTTPException(422, "No text provided")
+
+    # Step 1 — Parse Japanese text into structured items
     try:
-        enriched = json.loads(_strip_fences(raw_tr))
+        raw = llm("gmi", PARSE_TEXT_PROMPT + "\n\n" + req.text, max_tokens=4000)
     except Exception as e:
-        print("PARSE ERROR:", e)
-        # Try to salvage complete items from the truncated response
-        salvaged = _salvage_items(raw_tr)
+        raise HTTPException(502, f"Text parsing failed: {e}")
+
+    print("PARSE TEXT RAW:", repr(raw))
+
+    cleaned = _strip_fences(raw)
+    try:
+        data = json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        print("PARSE TEXT JSON ERROR:", e)
+        salvaged = _salvage_items(raw)
         if salvaged:
-            print(f"SALVAGED {len(salvaged)} complete items")
-            return {"items": salvaged}
-        # Nothing recoverable — keep original items so the page still shows Japanese names
-        return ocr_data
+            return _enrich(salvaged)
+        raise HTTPException(422, "Could not parse menu text into structured items")
 
-    # Step 3 — Japanese description enrichment
-    try:
-        raw_jd = llm("aiand", JP_DESC_PROMPT + "\n\n" + json.dumps(enriched), max_tokens=4000)
-    except Exception as e:
-        print("AIAND CALL ERROR:", e)
-        return {"items": enriched}
+    # Normalize shape
+    if isinstance(data, list):
+        data = {"items": data}
+    items = data.get("items", [])
+    if not items:
+        return {"items": []}
 
-    print("AIAND RAW:", repr(raw_jd))
-
-    try:
-        with_jp_desc = json.loads(_strip_fences(raw_jd))
-    except Exception as e:
-        print("AIAND PARSE ERROR:", e)
-        return {"items": enriched}
-
-    # Step 4 — Cultural context enrichment
-    try:
-        raw_cn = llm("gmi", CULTURE_PROMPT + "\n\n" + json.dumps(with_jp_desc), max_tokens=4000)
-    except Exception as e:
-        print("GMI CULTURE CALL ERROR:", e)
-        return {"items": with_jp_desc}
-
-    print("GMI CULTURE RAW:", repr(raw_cn))
-
-    try:
-        with_culture = json.loads(_strip_fences(raw_cn))
-    except Exception as e:
-        print("GMI CULTURE PARSE ERROR:", e)
-        return {"items": with_jp_desc}
-
-    return {"items": with_culture}
+    return _enrich(items)
 
 
 class ExportRequest(BaseModel):
