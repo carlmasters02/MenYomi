@@ -386,7 +386,6 @@ body{
     <div><div class="brand-name">Men<b>Yomi</b><span class="brand-jp">メニヨミ</span></div></div>
   </a>
   <div class="nav-links">
-    <a href="#app">Translate</a>
     <a href="#features">Features</a>
     <a href="#how">How it works</a>
     <a class="nav-cta" href="#app">Read a menu →</a>
@@ -402,13 +401,13 @@ body{
       <div class="hero-jp jp">お品書き、読めます。</div>
       <p class="lede">Point your camera at any handwritten izakaya board or paste a restaurant link. MenYomi reads it, translates it, explains each dish, flags what you can't eat, and even tells you how to order it out loud.</p>
       <div class="hero-actions">
-        <a class="btn btn-primary" href="#app">🍜 Read a menu now</a>
+        <a class="btn btn-primary" href="#app">Read a menu now</a>
         <a class="btn btn-ghost" href="#features">See what it does</a>
       </div>
       <div class="hero-stats">
-        <div class="s"><b>6</b><span>AI systems working together</span></div>
+        <div class="s"><b>5</b><span>AI systems working together</span></div>
         <div class="div"></div>
-        <div class="s"><b>&lt;10s</b><span>photo to full menu</span></div>
+        <div class="s"><b>Seconds</b><span>photo to full menu</span></div>
         <div class="div"></div>
         <div class="s"><b>JP↔EN</b><span>both directions</span></div>
       </div>
@@ -442,7 +441,6 @@ body{
       <div class="ws-source">
         <div class="tabs">
           <button class="tab active" data-tab="photo">📷 Photo</button>
-          <button class="tab" data-tab="url">🔗 Link</button>
           <button class="tab" data-tab="text">⌨️ Text</button>
         </div>
 
@@ -455,13 +453,6 @@ body{
           </div>
           <img class="preview-img" id="previewImg" alt="menu preview" />
           <button class="go-btn" id="goPhoto" disabled>Translate menu</button>
-        </div>
-
-        <div class="tab-panel" id="panel-url">
-          <label class="field-label">Restaurant menu URL</label>
-          <input class="url-input" id="urlInput" placeholder="https://restaurant.jp/menu" />
-          <button class="go-btn" id="goUrl">Fetch & translate</button>
-          <p class="hint">MenYomi reads the menu text from the page and runs it through the same pipeline. Works best on pages with real text (not image-only menus).</p>
         </div>
 
         <div class="tab-panel" id="panel-text">
@@ -801,14 +792,6 @@ async function translatePhoto(){
     stopLoading();render(data.items||data||[]);
   }catch(e){stopLoading();toast('Something went wrong reading that menu.');console.error(e);}
 }
-async function translateUrl(){
-  const url=document.getElementById('urlInput').value.trim();if(!url)return;
-  showLoading();
-  try{
-    const r=await fetch('/parse-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
-    const data=await r.json();stopLoading();render(data.items||data||[]);
-  }catch(e){stopLoading();toast('Could not read that link. It may be an image-only menu.');console.error(e);}
-}
 async function translateText(){
   const text=document.getElementById('textInput').value.trim();if(!text)return;
   showLoading();
@@ -818,7 +801,6 @@ async function translateText(){
   }catch(e){stopLoading();toast('Something went wrong.');console.error(e);}
 }
 document.getElementById('goPhoto').onclick=translatePhoto;
-document.getElementById('goUrl').onclick=translateUrl;
 document.getElementById('goText').onclick=translateText;
 
 // ---------- currency init ----------

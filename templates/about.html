@@ -22,12 +22,16 @@
 .dev-name{font-family:"Manrope";font-weight:800;font-size:30px;letter-spacing:-.02em;margin-bottom:4px}
 .dev-role{color:var(--lantern);font-weight:700;font-size:15px;margin-bottom:20px}
 .dev-bio p{color:#c4c4d8;line-height:1.7;font-size:15.5px;margin-bottom:14px}
-.dev-links{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
-.dev-links a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;font-size:14px;
-  color:var(--paper-text);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
-  padding:10px 16px;border-radius:11px;transition:all .2s}
-.dev-links a:hover{background:rgba(232,163,61,.1);border-color:var(--lantern);color:var(--lantern)}
-.edit-flag{color:var(--shu);font-weight:700}
+.back-link{margin-bottom:32px}
+.dev-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
+.dev-links a{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
+  border:2px solid var(--lantern);color:var(--lantern);
+  background:transparent;transition:all .25s ease;
+  box-shadow:0 0 12px rgba(232,163,61,.6),inset 0 0 8px rgba(232,163,61,.25)}
+.dev-links a:hover{transform:translateY(-3px);
+  box-shadow:0 0 20px rgba(232,163,61,.85),0 0 40px rgba(232,163,61,.35),inset 0 0 12px rgba(232,163,61,.4)}
+.dev-links a svg{width:20px;height:20px;fill:var(--lantern)}
+
 </style>
 </head>
 <body>
@@ -48,37 +52,31 @@
 
   <div class="dev-card">
     <div class="dev-photo">
-      <!-- TO ADD YOUR PHOTO: replace the placeholder div below with:
-           <img src="/static/me.jpg" alt="Your Name" />
-           and drop me.jpg into your static folder. -->
-      <div class="placeholder">
-        <div class="ico">📷</div>
-        <small>Your photo here<br>(replace in about.html)</small>
-      </div>
+      <img src="/static/me.jpg" alt="Carl Masters" />
     </div>
     <div class="dev-bio">
-      <!-- EDIT: your name -->
-      <div class="dev-name">Your Name</div>
-      <!-- EDIT: your role / tagline -->
-      <div class="dev-role">Cybersecurity student · Solo builder</div>
+      <div class="dev-name">Carl Masters</div>
+      <div class="dev-role">Cybersecurity student · Solo builder · Tokyo</div>
 
-      <!-- EDIT: your bio. A few short paragraphs work best. -->
-      <p><span class="edit-flag">[Edit this in about.html]</span> Write a short intro here — who you are, what you're studying or working on, and what pulled you toward building things.</p>
-      <p>MenYomi started at a Tokyo hackathon as a solo build against multi-person teams, and grew into a full product afterward. Tell the story you want to tell: what you learned wiring six AI platforms together, why the problem matters to you, or where you want to take it next.</p>
-      <p>Keep it human — a couple of honest paragraphs beat a wall of buzzwords.</p>
+      <p>I'm a Cybersecurity student at Temple University Japan, based in Tokyo. I got into building things out of curiosity and quickly found I genuinely love the process, and MenYomi is one of the projects that came out of that.</p>
+
+      <p>MenYomi was born at the Agent Forge AI Hackathon in Tokyo, a one-day event built around a simple premise: the chatbot era is over, and the next generation of AI applications needs to access live data, run their own code, and ship to the real world. I built MenYomi solo, against teams of up to six, and pushed through a full day of technical hurdles to ship a working product by the deadline.</p>
+
+      <p>The idea is personal to the setting. Living in Tokyo, I watched how often a language barrier turns something as simple as ordering food into a stressful guess: handwritten menus, unfamiliar dishes, no idea what contains what. MenYomi is my answer. Point your camera at any Japanese menu and get it back translated, explained, and safe to order from.</p>
+
+      <p>Under the hood, it's not one model doing everything. It's six specialist systems working together. A self-hosted OCR model on Nosana reads the menu, with Qwen as a vision fallback; GMI translates and enriches each dish; ai&amp; adds natural Japanese descriptions on Japan-based infrastructure; Daytona runs generated code safely in a sandbox; and the whole thing was built in Qoder. Wiring those six platforms into one clean experience as a solo developer was the real challenge, and the part I'm most proud of.</p>
+
+      <p>The goal was never just to translate words. It was to take something intimidating and make it feel effortless, so anyone, anywhere, can sit down at a Japanese restaurant and order with confidence.</p>
 
       <div class="dev-links">
-        <!-- EDIT: your real links, or remove the ones you don't use -->
-        <a href="#">🐙 GitHub</a>
-        <a href="#">💼 LinkedIn</a>
-        <a href="#">✉️ Email</a>
+        <a href="mailto:carl.masters.dev@protonmail.com" title="Email"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
+        <a href="https://github.com/carlmasters02" target="_blank" rel="noopener" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+        <a href="https://www.linkedin.com/in/carl-masters-724951297/" target="_blank" rel="noopener" title="LinkedIn"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+        <a href="https://carlmasters.com" target="_blank" rel="noopener" title="Website"><svg viewBox="0 0 24 24" style="fill:none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></a>
       </div>
     </div>
   </div>
 
-  <div class="muted-note" style="margin-top:40px">
-    <b>How to edit this page:</b> open <code>about.html</code> and look for the <span class="edit-flag">EDIT</span> comments — replace the name, role, bio paragraphs, and links with your own. To add your photo, drop an image into your static folder and swap the placeholder for an <code>&lt;img&gt;</code> tag (instructions are in the file's comments).
-  </div>
 </main>
 
 <footer class="footer"><div class="footer-in">

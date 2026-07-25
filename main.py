@@ -2,6 +2,9 @@ import json
 import os
 import re
 
+import requests
+from urllib.parse import urlparse
+
 from fastapi import FastAPI, HTTPException, UploadFile, File, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -68,6 +71,20 @@ PARSE_TEXT_PROMPT = (
 def _strip_fences(text: str) -> str:
     cleaned = re.sub(r"^```(?:json)?\s*", "", text.strip(), flags=re.IGNORECASE)
     return re.sub(r"\s*```$", "", cleaned, flags=re.IGNORECASE)
+
+
+def _extract_text(html: str) -> str:
+    """Strip script/style/tags and collapse whitespace to visible text."""
+    text = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r'<[^>]+>', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+
+def _has_japanese(text: str) -> bool:
+    """Check if text contains Japanese characters (Hiragana, Katakana, CJK)."""
+    return bool(re.search(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]', text))
 
 
 def _salvage_items(text: str) -> list | None:
@@ -273,6 +290,76 @@ def parse_text(req: ParseTextRequest):
     items = data.get("items", [])
     if not items:
         return {"items": []}
+
+    return _enrich(items)
+
+
+class ParseUrlRequest(BaseModel):
+    url: str
+
+
+@app.post("/parse-url")
+def parse_url(req: ParseUrlRequest):
+    # Validate URL
+    try:
+        parsed = urlparse(req.url)
+        if parsed.scheme not in ('http', 'https') or not parsed.netloc:
+            raise ValueError("invalid scheme or host")
+    except Exception:
+        raise HTTPException(422, "Please enter a valid http or https URL")
+
+    # Fetch page
+    try:
+        resp = requests.get(
+            req.url,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; MenYomi/1.0)"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+    except requests.exceptions.Timeout:
+        raise HTTPException(504, "The page took too long to respond")
+    except requests.exceptions.HTTPError as e:
+        raise HTTPException(e.response.status_code if e.response is not None else 502, f"Could not reach that page: {e}")
+    except Exception as e:
+        raise HTTPException(502, f"Could not fetch that page: {e}")
+
+    # Extract visible text
+    try:
+        text = _extract_text(resp.text)
+    except Exception as e:
+        print("TEXT EXTRACTION ERROR:", e)
+        raise HTTPException(422, "Could not extract readable text from that page")
+
+    if len(text) < 20 or not _has_japanese(text):
+        return {
+            "items": [],
+            "no_menu": True,
+            "message": "We couldn't find a readable menu on that page — the site may show its menu as an image or PDF. Try uploading a photo instead.",
+        }
+
+    # Run through the same pipeline as /parse-text
+    try:
+        raw = llm("gmi", PARSE_TEXT_PROMPT + "\n\n" + text, max_tokens=4000)
+    except Exception as e:
+        raise HTTPException(502, f"Menu parsing failed: {e}")
+
+    print("PARSE URL RAW:", repr(raw))
+
+    cleaned = _strip_fences(raw)
+    try:
+        data = json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        print("PARSE URL JSON ERROR:", e)
+        salvaged = _salvage_items(raw)
+        if salvaged:
+            return _enrich(salvaged)
+        return {"items": [], "no_menu": True, "message": "We couldn't structure the menu text. Try pasting the text directly or uploading a photo."}
+
+    if isinstance(data, list):
+        data = {"items": data}
+    items = data.get("items", [])
+    if not items:
+        return {"items": [], "no_menu": True, "message": "No dishes found on that page."}
 
     return _enrich(items)
 
