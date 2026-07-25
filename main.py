@@ -409,12 +409,34 @@ HTML_PAGE = """
 
   .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
   .item-names { flex: 1; }
+  .jp-name-row { display: flex; align-items: center; gap: 0.4rem; }
   .jp-name {
     font-family: 'Noto Sans JP', sans-serif;
     font-size: 1.15rem;
     font-weight: 700;
     color: var(--text);
     line-height: 1.3;
+  }
+  .speak-btn {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.15rem 0.3rem;
+    border-radius: 50%;
+    transition: background 0.15s, transform 0.15s;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .speak-btn:hover { background: #f0ece6; }
+  .speak-btn:active { transform: scale(0.9); }
+  .speak-btn.speaking {
+    background: var(--accent2);
+    animation: pulse-speak 0.8s ease-in-out infinite;
+  }
+  @keyframes pulse-speak {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(42,157,143,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(42,157,143,0); }
   }
   .jp-desc {
     font-family: 'Noto Sans JP', sans-serif;
@@ -655,6 +677,18 @@ function applyFilters() {
   countEl.textContent = `Showing ${shown} of ${_menuItems.length} dishes`;
 }
 
+function speakJapanese(text, btn) {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'ja-JP';
+  utt.rate = 0.9;
+  btn.classList.add('speaking');
+  utt.onend = () => btn.classList.remove('speaking');
+  utt.onerror = () => btn.classList.remove('speaking');
+  speechSynthesis.speak(utt);
+}
+
 function startExport(items) {
   const btn = document.getElementById('exportBtn');
   btn.textContent = 'Preparing download…';
@@ -760,7 +794,10 @@ function renderItems(items) {
           ${item.en_name ? `<img class="dish-photo" src="https://source.unsplash.com/300x200/?${encodeURIComponent(item.en_name + ' japanese food')}" alt="${item.en_name}" loading="lazy" onerror="this.style.display='none'" />` : ''}
           <div class="item-top">
             <div class="item-names">
-              <div class="jp-name">${item.jp_name}</div>
+              <div class="jp-name-row">
+                <div class="jp-name">${item.jp_name}</div>
+                <button class="speak-btn" onclick="speakJapanese('${item.jp_name.replace(/'/g, "\\'")}', this)" title="Listen to pronunciation">🔊</button>
+              </div>
               ${item.jp_desc ? `<div class="jp-desc">${item.jp_desc}</div>` : ''}
               ${item.en_name ? `<div class="en-name">${item.en_name}</div>` : ''}
             </div>
