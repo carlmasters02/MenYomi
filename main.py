@@ -32,6 +32,13 @@ JP_DESC_PROMPT = (
     "No markdown, no commentary."
 )
 
+CULTURE_PROMPT = (
+    "For each menu item, add a field 'culture_note' — "
+    "one short sentence (max 20 words) explaining what the dish is or how it's traditionally eaten, "
+    "written for a foreign tourist. Return ONLY the same JSON with culture_note added to each item. "
+    "No markdown, no commentary."
+)
+
 EXPORT_PROMPT = (
     "Generate a complete standalone HTML document for this restaurant menu. "
     "Include inline CSS, show each item's Japanese name, English name, price, "
@@ -173,7 +180,22 @@ async def parse_menu(file: UploadFile = File(...)):
         print("AIAND PARSE ERROR:", e)
         return {"items": enriched}
 
-    return {"items": with_jp_desc}
+    # Step 4 — Cultural context enrichment
+    try:
+        raw_cn = llm("gmi", CULTURE_PROMPT + "\n\n" + json.dumps(with_jp_desc), max_tokens=4000)
+    except Exception as e:
+        print("GMI CULTURE CALL ERROR:", e)
+        return {"items": with_jp_desc}
+
+    print("GMI CULTURE RAW:", repr(raw_cn))
+
+    try:
+        with_culture = json.loads(_strip_fences(raw_cn))
+    except Exception as e:
+        print("GMI CULTURE PARSE ERROR:", e)
+        return {"items": with_jp_desc}
+
+    return {"items": with_culture}
 
 
 class ExportRequest(BaseModel):
@@ -421,6 +443,13 @@ HTML_PAGE = """
     padding: 0.15rem 0.55rem;
     text-transform: capitalize;
   }
+  .culture-note {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--muted);
+    margin-top: 0.4rem;
+    line-height: 1.35;
+  }
 
   .raw-block {
     white-space: pre-wrap;
@@ -563,6 +592,7 @@ function renderItems(items) {
           </div>
           ${item.en_desc ? `<div class="en-desc">${item.en_desc}</div>` : ''}
           ${pills}
+          ${item.culture_note ? `<div class="culture-note">${item.culture_note}</div>` : ''}
         </div>`;
     });
   });
