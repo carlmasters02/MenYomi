@@ -67,7 +67,7 @@ async def parse_menu(file: UploadFile = File(...)):
 
     # Step 2 — Translation / enrichment
     try:
-        raw_tr = llm("gmi", TRANSLATE_PROMPT + "\n\n" + json.dumps(items))
+        raw_tr = llm("gmi", TRANSLATE_PROMPT + "\n\n" + json.dumps(items), max_tokens=4000)
     except Exception as e:
         print("GMI CALL ERROR:", e)
         # Translation unavailable — return OCR-only data
